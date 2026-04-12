@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls C:/Users/Liran/ffammili/*.mjs C:/Users/Liran/ffammili/*.ts C:/Users/Liran/ffammili/*.json)"
+    ]
+  }
+}

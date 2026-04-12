@@ -1,0 +1,20 @@
+[build]
+  # prisma generate runs BEFORE next build on every deploy, regardless of cache.
+  # This is the primary fix for PrismaClientInitializationError on Netlify CI.
+  command = "npx prisma generate && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION  = "20"
+  NPM_VERSION   = "10"
+  # Tell Next.js it is running inside a CI environment
+  CI = "true"
+
+# @netlify/plugin-nextjs is required for:
+# - Server-side rendering
+# - API routes / Route Handlers
+# - Next.js Image Optimization
+# - Middleware
+# Netlify auto-installs the plugin from this declaration.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
