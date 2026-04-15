@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { uploadToCloudinary } from "@/lib/cloudinary"
 import { Camera, Loader2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -24,6 +24,11 @@ export function ImageUploader({
   const [preview, setPreview] = useState(currentImage)
   const [error, setError] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Sync if parent provides a new currentImage (e.g. ProfileEditor loading saved image)
+  useEffect(() => {
+    setPreview(currentImage)
+  }, [currentImage])
 
   const sizeClasses = {
     sm: "w-20 h-20",
@@ -80,12 +85,12 @@ export function ImageUploader({
           )}
         >
           {preview ? (
-  <img
-    src={preview}
-    alt="Profile"
-    className="w-full h-full object-cover"
-  />
-) : (
+            <img
+              src={preview}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-1">
               <Camera className="w-6 h-6 text-famli-400" />
               <span className="text-xs text-famli-400 font-medium">Add photo</span>
