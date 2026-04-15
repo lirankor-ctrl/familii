@@ -17,22 +17,49 @@ export default function LoginPage() {
     setError("")
     setLoading(true)
 
-    const form = new FormData(e.currentTarget)
-    const result = await signIn("credentials", {
-      email: form.get("email") as string,
-      password: form.get("password") as string,
-      redirect: false,
-    })
+    try {
+      const form = new FormData(e.currentTarget)
+      const email = (form.get("email") as string)?.trim().toLowerCase()
+      const password = form.get("password") as string
 
-    setLoading(false)
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
 
-    if (result?.error) {
-      setError(result.error === "CredentialsSignin" ? "Invalid email or password" : result.error)
-      return
+      if (!result) {
+        setError("Login failed. Please try again.")
+        setLoading(false)
+        return
+      }
+
+      if (result.error) {
+        setError(
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password"
+            : "Login failed. Please try again."
+        )
+        setLoading(false)
+        return
+      }
+
+      if (!result.ok) {
+        setError("Login failed. Please try again.")
+        setLoading(false)
+        return
+      }
+
+      router.replace("/dashboard")
+      router.refresh()
+
+      setTimeout(() => {
+        window.location.href = "/dashboard"
+      }, 150)
+    } catch (err) {
+      setError("Something went wrong. Please try again.")
+      setLoading(false)
     }
-
-    router.push("/dashboard")
-    router.refresh()
   }
 
   return (
@@ -46,7 +73,9 @@ export default function LoginPage() {
       <div className="famli-card p-6">
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label htmlFor="email" className="famli-label">Email</label>
+            <label htmlFor="email" className="famli-label">
+              Email
+            </label>
             <input
               id="email"
               name="email"
@@ -59,7 +88,9 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="famli-label">Password</label>
+            <label htmlFor="password" className="famli-label">
+              Password
+            </label>
             <div className="relative">
               <input
                 id="password"
@@ -76,7 +107,11 @@ export default function LoginPage() {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
