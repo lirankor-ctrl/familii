@@ -92,4 +92,5 @@ export interface MealFormData {
   notes?: string
   location?: string
   scheduledAt: string
+  imageUrl?: string
 }

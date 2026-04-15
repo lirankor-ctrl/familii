@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Plus, X } from "lucide-react"
 import { createMealAction } from "@/actions/meals"
+import { ImageUploader } from "@/components/ImageUploader"
 import { useRouter } from "next/navigation"
 
 export function AddMealButton() {
@@ -10,13 +11,24 @@ export function AddMealButton() {
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [imageUrl, setImageUrl] = useState("")
+
+  function handleClose() {
+    setOpen(false)
+    setImageUrl("")
+    setError("")
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError("")
     setSaving(true)
 
-    const result = await createMealAction(new FormData(e.currentTarget))
+    const fd = new FormData(e.currentTarget)
+    // imageUrl comes from hidden input, but set it explicitly to be safe
+    fd.set("imageUrl", imageUrl)
+
+    const result = await createMealAction(fd)
     setSaving(false)
 
     if (!result.success) {
@@ -24,7 +36,7 @@ export function AddMealButton() {
       return
     }
 
-    setOpen(false)
+    handleClose()
     router.refresh()
   }
 
@@ -50,7 +62,7 @@ export function AddMealButton() {
             <div className="flex items-center justify-between mb-5 sticky top-0 bg-white z-10 pb-2">
               <h2 className="text-lg font-bold text-stone-900">Plan a Family Meal</h2>
               <button
-                onClick={() => setOpen(false)}
+                onClick={handleClose}
                 className="text-stone-400 hover:text-stone-600 p-1"
                 type="button"
               >
@@ -59,6 +71,15 @@ export function AddMealButton() {
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 pb-24">
+              <div className="flex justify-center">
+                <ImageUploader
+                  folder="famli/meals"
+                  size="lg"
+                  onUpload={(url) => setImageUrl(url)}
+                />
+              </div>
+              <input type="hidden" name="imageUrl" value={imageUrl} />
+
               <div>
                 <label className="famli-label">Title</label>
                 <input

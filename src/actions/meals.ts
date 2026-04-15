@@ -12,6 +12,7 @@ const mealSchema = z.object({
   notes: z.string().max(500).optional(),
   location: z.string().max(100).optional(),
   scheduledAt: z.string().min(1, "Date is required"),
+  imageUrl: z.string().optional(),
 })
 
 export async function createMealAction(
@@ -26,6 +27,7 @@ export async function createMealAction(
     notes: formData.get("notes") || undefined,
     location: formData.get("location") || undefined,
     scheduledAt: formData.get("scheduledAt"),
+    imageUrl: formData.get("imageUrl") || undefined,
   })
 
   if (!parsed.success) {
@@ -37,6 +39,7 @@ export async function createMealAction(
       data: {
         ...parsed.data,
         scheduledAt: new Date(parsed.data.scheduledAt),
+        imageUrl: parsed.data.imageUrl || null,
         createdById: session.user.id,
         familyId: session.user.familyId,
       },
@@ -106,6 +109,78 @@ export async function rsvpMealAction(
   } catch (err) {
     console.error("[rsvpMealAction]", err)
     return { success: false, error: "Failed to update RSVP" }
+  }
+}
+
+export async function updateMealAction(
+  mealId: string,
+  formData: FormData
+): Promise<ActionResult<MealWithRSVPs>> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { success: false, error: "Not authenticated" }
+
+  const existing = await prisma.mealEvent.findUnique({
+    where: { id: mealId },
+    select: { createdById: true },
+  })
+
+  if (!existing) return { success: false, error: "Meal not found" }
+  if (existing.createdById !== session.user.id) return { success: false, error: "Not authorized" }
+
+  const parsed = mealSchema.safeParse({
+    title: formData.get("title"),
+    notes: formData.get("notes") || undefined,
+    location: formData.get("location") || undefined,
+    scheduledAt: formData.get("scheduledAt"),
+    imageUrl: formData.get("imageUrl") || undefined,
+  })
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message }
+  }
+
+  try {
+    const meal = await prisma.mealEvent.update({
+      where: { id: mealId },
+      data: {
+        ...parsed.data,
+        scheduledAt: new Date(parsed.data.scheduledAt),
+        imageUrl: parsed.data.imageUrl || null,
+      },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profileImage: true,
+            familyRole: true,
+            dateOfBirth: true,
+            gender: true,
+          },
+        },
+        rsvps: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                profileImage: true,
+                familyRole: true,
+                dateOfBirth: true,
+                gender: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    return { success: true, data: meal as MealWithRSVPs }
+  } catch (err) {
+    console.error("[updateMealAction]", err)
+    return { success: false, error: "Failed to update meal event" }
   }
 }
 
